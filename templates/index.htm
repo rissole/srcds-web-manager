@@ -1,0 +1,26 @@
+{% extends "base.htm" %}
+{% block title %}Status {% endblock %}
+{% block content %}
+    <table class="table table-hover">
+        <thead>
+            <th>Steam ID</th>
+            <th>Name</th>
+            <th>IP</th>
+            <th>Ping</th>
+            <th>Duration</th>
+            <th>Actions</th>
+        </thead>
+        <tbody>
+        {% for user in users %}
+            <tr>
+                <td>{{ user.uniqueid }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.adr }}</td>
+                <td>{{ user.ping }}</td>
+                <td>{{ user.connected }}</td>
+                <td><a href="#">BAN</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

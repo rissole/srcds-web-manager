@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% block head %}
+    {% block css %}
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet">
+    {% endblock %}
+    <title>{% block title %}{% endblock %} - SRCDS</title>
+    {% endblock %}
+</head>
+<body>
+    {% block prescripts %}{% endblock %}
+    <nav class="navbar navbar-default" role="navigation">
+        {% if no_nav is not defined %}
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/">SRCDS</a>
+            </ul>
+        </div>
+        {% endif %}
+    </nav>
+    
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+    
+    {% block scripts %}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
+    {% endblock %}
+</body>
