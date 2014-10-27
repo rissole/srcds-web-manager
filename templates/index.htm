@@ -42,7 +42,12 @@
                     <td>{{ user.ping }}</td>
                     <td>{{ user.connected }}</td>
                     <td>
-                        
+                        <button type="button" class="btn kick btn-default btn-sm" title="Kick user">
+                          <span class="glyphicon glyphicon-eject"></span>
+                        </button>
+                        <button type="button" class="btn ban btn-default btn-sm" title="Ban user">
+                          <span class="glyphicon glyphicon-ban-circle"></span>
+                        </button>
                     </td>
                 </tr>
             {% endfor %}

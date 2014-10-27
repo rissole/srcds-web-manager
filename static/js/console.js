@@ -35,6 +35,10 @@ function RconConsole() {
         }
     }
     
+    this.getActiveServer = function() {
+        return this.activeServer;
+    }
+    
     this.setActiveServer = function(server) {
         this.activeServer = server;
         if (server in this.historyCache == false) {
@@ -80,6 +84,16 @@ $('.console-body input').on('enterKey', function() {
     $textarea.val($textarea.val() + '> ' + command + '\n');
     RCON_CONSOLE.pushHistory(command);
     $(this).val('');
+    $.post('/command', {
+        'server': RCON_CONSOLE.getActiveServer(),
+        'command': command
+    }, function(response) {
+        if (response.success) {
+            $textarea.val($textarea.val() + response.result.replace(/\x00/g, '') + '\n');
+        } else {
+            $textarea.val($textarea.val() + 'ERROR: ' + response.error + '\n');
+        }
+    }, 'json');
 });
 
 $('.console-body input').on('upArrow', function() {
