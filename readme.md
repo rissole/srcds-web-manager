@@ -14,7 +14,7 @@ Features
 Setup
 =====
 
-1. Install [Flask](flask.pocoo.org)
+1. Install [Flask](http://flask.pocoo.org)
 1. Install [pysrcds](https://github.com/pmrowla/pysrcds)
 1. Create a `config.ini` (see `example.ini` for structure)
 1. `python app.py`
