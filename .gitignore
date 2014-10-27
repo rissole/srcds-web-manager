@@ -2,5 +2,6 @@ flask
 srcds
 *.ini
 !example.ini
+!users.ini
 *.pyc
 appsecret
