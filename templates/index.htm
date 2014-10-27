@@ -28,7 +28,8 @@
     </script>
     {% for name, status in statuses.iteritems() %}
     <div class="server" data-server="{{ name }}">
-        <h2>{{ status.hostname }}<small class="pull-right">{{ status.players_humans }} / {{ status.players_max }}</small></h2>
+        <h2><span class="hostname">{{ status.hostname }}</span><small class="pull-right">{{ status.players_humans }} / {{ status.players_max }}</small></h2>
+        <h4>Map: <a href="#map" title="Change map...">{{ status.map }}</a></h4>
         <table class="table table-hover">
             <thead>
                 <tr>
@@ -55,7 +56,7 @@
             <h4 class="modal-title" id="user-kick-modal-label">Kick user</h4>
           </div>
           <div class="modal-body">
-            <label for="kick-reason">Reason:</label>
+            <label for="action-reason">Reason:</label>
             <input type="text" autocomplete="off" class="form-control" id="action-reason" placeholder="Leave blank for no reason">
           </div>
           <div class="modal-footer">
@@ -101,6 +102,25 @@
         </div>
       </div>
     </div>
+    <!-- map change modal -->
+    <div class="modal fade" id="map-change-modal" tabindex="-1" role="dialog" aria-labelledby="map-change-modal-label" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="map-change-modal-label">Change map</h4>
+          </div>
+          <div class="modal-body">
+            <label for="new-map">New map name:</label>
+            <input type="text" autocomplete="off" class="form-control" id="new-map" placeholder="Enter a map name">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" data-loading-text="Changing...">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
 {% endblock %}
 {% block prescripts %}
 <audio id="cardsound0">
@@ -135,6 +155,7 @@
 {% endblock %}
 {% block scripts %}
     {{ super() }}
+    <script src="https://raw.githubusercontent.com/bassjobsen/Bootstrap-3-Typeahead/master/bootstrap3-typeahead.js"></script>
     <script src="{{ url_for('static', filename='js/console.js') }}"></script>
     <script>
         function reloadStatus() {
@@ -147,6 +168,7 @@
                     }
                     $server.find('tbody > tr').remove();
                     $server.find('h2 > small').text('%1 / %2'.replace('%1', status.players_humans).replace('%2', status.players_max));
+                    $server.find('h4 > a[href="#map"]').text(status.map);
                     for (i in status.users) {
                         var $row = $server.find('table > tbody').append($('#user-row').html());
                         $row.find('td:nth-child(1)').text(status.users[i]['uniqueid']);
@@ -157,33 +179,50 @@
                     }
                 }
                 $('#lastRefresh').text('Last refresh: ' + (new Date()).toUTCString());
+                
+                $('button.ban, button.kick').click(function() {
+                    var $row = $(this).parents('tr');
+                    var uniqueid = $row.find('td:nth-child(1)').text();
+                    var name = $row.find('td:nth-child(2)').text();
+                    var action = $(this).hasClass('ban') ? 'ban' : 'kick';
+                    $('#user-'+action+'-modal')
+                    .data('user', {'uniqueid': uniqueid, 'name': name})
+                    .data('action', action)
+                    .data('server', $row.parents('div.server').attr('data-server'))
+                    .modal('show')
+                    .find('.modal-title').text((action == 'ban' ? 'Ban' : 'Kick') + ' "' + name + '"');
+                });
             }, 'json');
         }
         
         $(function() {
             reloadStatus();
             setInterval(reloadStatus, 10000);
+            $.get('/maps', function(response) {
+                $('#new-map').typeahead({ source: response });
+            }, 'json');
         });
         
-        $('.btn.ban, .btn.kick').click(function() {
-            var $row = $(this).parents('tr');
-            var uniqueid = $row.find('td:nth-child(1)').text();
-            var name = $row.find('td:nth-child(2)').text();
-            var action = $(this).hasClass('ban') ? 'ban' : 'kick';
+        $('a[href="#map"]').click(function() {
+            var $server = $(this).parents('div.server');
+            var name = $server.attr('data-server');
+            var hostname = $server.find('.hostname').text();
             
-            $('#user-'+action+'-modal')
-            .data('user', {'uniqueid': uniqueid, 'name': name, 'action': action})
+            $('#map-change-modal')
+            .data('server', name)
             .modal('show')
-            .find('.modal-title').text((action == 'ban' ? 'Ban' : 'Kick') + ' "' + name + '"');
+            .find('.modal-title').text('Change map on "' + hostname + '"')
+            .find('input').text($(this).text());
         });
         
         $('#user-kick-modal .modal-footer > .btn-primary').click(function() {
             var $modal = $('#user-kick-modal');
             var reason = $modal.find('input').val();
+            var server = $modal.data('server');
             var $btn = $(this);
             $btn.button('loading');
             $.post('/command', {
-                'server': $(this).parents('div.server').attr('data-server'),
+                'server': server,
                 'command': 'kickid ' + $modal.data('user')['uniqueid'] + (reason.length > 0 ? ' "' + reason.replace(/"/g, '\\"') + '"' : '')
             }, function(response) {
                 if (response.success) {
@@ -201,18 +240,41 @@
         
         $('#user-ban-modal .modal-footer > .btn-primary').click(function() {
             var $modal = $('#user-ban-modal');
+            var server = $modal.data('server');
             var duration = $('input[name="banDurationOptions"]:checked').val();
-            duration = (duration == "-1") ? $('#banDurationCustomValue').val() : duration;
+            duration = (duration == '-1') ? $('#banDurationCustomValue').val() : duration;
             var $btn = $(this);
             $btn.button('loading');
             $.post('/command', {
-                'server': $(this).parents('div.server').attr('data-server'),
+                'server': server,
                 'command': 'banid ' + duration + ' ' + $modal.data('user')['uniqueid']
             }, function(response) {
                 if (response.success) {
                     $modal.find('.modal-title').text('Ban successful.');
+                    $('#cardsound0')[0].play();
                 } else {
                     $modal.find('.modal-title').text('Error during ban.');
+                }
+                $btn.button('reset')
+                setTimeout(function() { 
+                    $modal.modal('hide');
+                }, 1000);
+            }, 'json');
+        });
+        
+        $('#map-change-modal .modal-footer > .btn-primary').click(function() {
+            var $modal = $('#map-change-modal');
+            var map = $modal.find('input').val();
+            var $btn = $(this);
+            $btn.button('loading');
+            $.post('/command', {
+                'server': $modal.data('server'),
+                'command': 'changelevel ' + map
+            }, function(response) {
+                if (response.success) {
+                    $modal.find('.modal-title').text('Level change successful.');
+                } else {
+                    $modal.find('.modal-title').text('Error changing level.');
                 }
                 $btn.button('reset')
                 setTimeout(function() { 

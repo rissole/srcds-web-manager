@@ -11,6 +11,8 @@ app = Flask(__name__)
 # Load config
 config = ConfigParser.ConfigParser()
 config.read('config.ini')
+with open('maps.txt') as f:
+    MAPS = filter(lambda l: not l.startswith('#'), f.read().split('\n'))
 
 # Set up Rcon connections
 RCONS = {}
@@ -67,6 +69,10 @@ def command():
         return json.dumps({'success': False, 'error': str(e)})
     
     return json.dumps({'success': True, 'result': result})
+
+@app.route("/maps")
+def maps():
+    return json.dumps(MAPS)
 
 if __name__ == "__main__":
     app.run(debug=True)
