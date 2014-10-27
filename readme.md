@@ -1,7 +1,7 @@
 SRCDS Server Manager
 ====================
 
-A simple Source Dedicated Server manager written in *Python 2.7* with Flask.
+A simple Source Dedicated Server manager written in **Python 2.7** with Flask.
 
 Features
 ========
@@ -16,7 +16,7 @@ Setup
 
 1. Install [Flask](http://flask.pocoo.org)
 1. Install [pysrcds](https://github.com/pmrowla/pysrcds)
-1. Create a `servers.ini` (see `example.ini` for structure)
+1. Create a `servers.ini` (see `servers_example.ini` for structure)
 1. Create an `appsecret` file. This file should simply contain a set of SECRET, random characters. `os.urandom(24)` works great.
 1. Create some login credentials with `python create_user.py`. This repo comes included with one set of credentials, admin/admin.
 1. `python app.py`, then visit http://localhost:5000/
