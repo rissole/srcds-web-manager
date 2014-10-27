@@ -103,6 +103,10 @@
     </div>
 {% endblock %}
 {% block prescripts %}
+<audio id="cardsound0">
+    <source src="http://wowimg.zamimg.com/hearthhead/sounds/VO_EX1_131t_Play_01.ogg" type="audio/ogg">
+    <source src="http://wowimg.zamimg.com/hearthhead/sounds/VO_EX1_131t_Play_01.mp3" type="audio/mpeg">
+</audio>
 <div class="console" id="rcon-console">
     <div class="console-header">
         <div class="row">
@@ -184,6 +188,7 @@
             }, function(response) {
                 if (response.success) {
                     $modal.find('.modal-title').text('Kick successful.');
+                    $('#cardsound0')[0].play();
                 } else {
                     $modal.find('.modal-title').text('Error during kick.');
                 }
