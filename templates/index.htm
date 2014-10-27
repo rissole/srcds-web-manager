@@ -1,5 +1,9 @@
 {% extends "base.htm" %}
 {% block title %}Status {% endblock %}
+{% block css %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/console.css') }}" rel="stylesheet">
+{% endblock %}
 {% block content %}
     {% for name, status in statuses.iteritems() %}
         <h2>{{ status.hostname }}<small class="pull-right">{{ status.players_humans }} / {{ status.players_max }}</small></h2>
@@ -15,6 +19,21 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>dmy</td>
+                    <td>x</td>
+                    <td>x-high</td>
+                    <td>x-slow</td>
+                    <td>xml:lang</td>
+                    <td>
+                        <button type="button" class="btn kick btn-default btn-sm" title="Kick user">
+                          <span class="glyphicon glyphicon-eject"></span>
+                        </button>
+                        <button type="button" class="btn ban btn-default btn-sm" title="Ban user">
+                          <span class="glyphicon glyphicon-ban-circle"></span>
+                        </button>
+                    </td>
+                </tr>
             {% for user in status.users %}
                 <tr>
                     <td>{{ user.uniqueid }}</td>
@@ -22,11 +41,81 @@
                     <td>{{ user.adr }}</td>
                     <td>{{ user.ping }}</td>
                     <td>{{ user.connected }}</td>
-                    <td><a href="#">BAN</a></td>
+                    <td>
+                        
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
         <hr/>
     {% endfor %}
+    <div class="modal fade" id="user-action-modal" tabindex="-1" role="dialog" aria-labelledby="user-action-modal-label" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="user-action-modal-label">%action% user</h4>
+          </div>
+          <div class="modal-body">
+            <label for="action-reason">Reason:</label>
+            <input type="text" class="form-control" id="action-reason" placeholder="Leave blank for no reason">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+{% block prescripts %}
+<div class="console" id="rcon-console">
+    <div class="console-header">
+        <div class="row">
+            <div class="col-xs-2">
+                <a href="#console"><span class="glyphicon glyphicon-chevron-up"></span> Screw it, give me a console.</a>
+            </div>
+            <div class="col-xs-8">
+                &nbsp;
+            </div>
+            <div class="col-xs-2 form">
+                <select class="form-control input-sm">
+                    {% for name, status in statuses.iteritems() %}
+                        <option value="{{ name }}">{{ status.hostname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="console-body">
+        {% for name, status in statuses.iteritems() %}
+            <textarea autocomplete="off" data-server="{{ name }}" readonly style="display: none"></textarea>
+        {% endfor %}
+        <input type="text" autocomplete="off" class="form-control"></input>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/console.js') }}"></script>
+    <script>
+        $('.btn.ban, .btn.kick').click(function() {
+            var $row = $(this).parents('tr');
+            var uniqueid = $row.find('td:nth-child(1)').text();
+            var name = $row.find('td:nth-child(2)').text();
+            var action = $(this).hasClass('ban') ? 'ban' : 'kick';
+            
+            $('#user-action-modal')
+            .data('user', {'uniqueid': uniqueid, 'name': name, 'action': action})
+            .modal('show')
+            .find('.modal-title').text((action == 'ban' ? 'Ban' : 'Kick') + ' "' + name + '"');
+        });
+        
+        $('#user-action-modal .modal-footer > .btn-primary').click(function() {
+            var $modal = $('#user-action-modal');
+            var reason = $modal.find('input').val();
+            $modal.modal('hide');
+        });
+    </script>
 {% endblock %}

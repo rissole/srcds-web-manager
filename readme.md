@@ -9,6 +9,7 @@ Features
 - Monitor status of all your servers
 - Kick and ban scrubs from the comfort of your browser window
 - Change the map and send messages to your underlings
+- Fully functional console, including PER-SERVER history
 
 Setup
 =====
