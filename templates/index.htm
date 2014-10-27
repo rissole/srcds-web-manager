@@ -170,7 +170,7 @@
                     $server.find('h2 > small').text('%1 / %2'.replace('%1', status.players_humans).replace('%2', status.players_max));
                     $server.find('h4 > a[href="#map"]').text(status.map);
                     for (i in status.users) {
-                        var $row = $server.find('table > tbody').append($('#user-row').html());
+                        var $row = $server.find('table > tbody').append($('#user-row').html()).find('tr:last');
                         $row.find('td:nth-child(1)').text(status.users[i]['uniqueid']);
                         $row.find('td:nth-child(2)').text(status.users[i]['name']);
                         $row.find('td:nth-child(3)').text(status.users[i]['adr']);
