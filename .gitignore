@@ -3,3 +3,4 @@ srcds
 *.ini
 !example.ini
 *.pyc
+appsecret

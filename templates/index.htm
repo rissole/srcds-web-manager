@@ -211,8 +211,7 @@
             $('#map-change-modal')
             .data('server', name)
             .modal('show')
-            .find('.modal-title').text('Change map on "' + hostname + '"')
-            .find('input').text($(this).text());
+            .find('.modal-title').text('Change map on "' + hostname + '"');
         });
         
         $('#user-kick-modal .modal-footer > .btn-primary').click(function() {

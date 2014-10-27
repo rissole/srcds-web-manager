@@ -1,3 +1,4 @@
+# This file is used for auto-complete in the change maps function
 # TF2 maps
 cp_gravelpit
 cp_dustbowl
