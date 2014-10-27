@@ -12,10 +12,11 @@
     {% block prescripts %}{% endblock %}
     <nav class="navbar navbar-default" role="navigation">
         {% if no_nav is not defined %}
+        {% block nav %}
         <div class="navbar-header">
             <a class="navbar-brand" href="/">SRCDS</a>
-            </ul>
         </div>
+        {% endblock %}
         {% endif %}
     </nav>
     

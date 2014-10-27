@@ -4,10 +4,32 @@
     {{ super() }}
     <link href="{{ url_for('static', filename='css/console.css') }}" rel="stylesheet">
 {% endblock %}
+{% block nav %}
+    {{ super() }}
+    <p class="navbar-text navbar-right" id="lastRefresh"></p>
+{% endblock %}
 {% block content %}
+    <script type="text/template" id="user-row">
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>
+                <button type="button" class="btn kick btn-default btn-sm" title="Kick user">
+                  <span class="glyphicon glyphicon-eject"></span>
+                </button>
+                <button type="button" class="btn ban btn-default btn-sm" title="Ban user">
+                  <span class="glyphicon glyphicon-ban-circle"></span>
+                </button>
+            </td>
+        </tr>
+    </script>
     {% for name, status in statuses.iteritems() %}
+    <div class="server" data-server="{{ name }}">
         <h2>{{ status.hostname }}<small class="pull-right">{{ status.players_humans }} / {{ status.players_max }}</small></h2>
-        <table class="table table-hover" data-server="{{ name }}">
+        <table class="table table-hover">
             <thead>
                 <tr>
                     <th>Steam ID</th>
@@ -19,26 +41,10 @@
                 </tr>
             </thead>
             <tbody>
-            {% for user in status.users %}
-                <tr>
-                    <td>{{ user.uniqueid }}</td>
-                    <td>{{ user.name }}</td>
-                    <td>{{ user.adr }}</td>
-                    <td>{{ user.ping }}</td>
-                    <td>{{ user.connected }}</td>
-                    <td>
-                        <button type="button" class="btn kick btn-default btn-sm" title="Kick user">
-                          <span class="glyphicon glyphicon-eject"></span>
-                        </button>
-                        <button type="button" class="btn ban btn-default btn-sm" title="Ban user">
-                          <span class="glyphicon glyphicon-ban-circle"></span>
-                        </button>
-                    </td>
-                </tr>
-            {% endfor %}
             </tbody>
         </table>
-        <hr/>
+    <hr/>
+    </div>
     {% endfor %}
     <!-- kick modal -->
     <div class="modal fade" id="user-kick-modal" tabindex="-1" role="dialog" aria-labelledby="user-kick-modal-label" aria-hidden="true">
@@ -101,7 +107,7 @@
     <div class="console-header">
         <div class="row">
             <div class="col-xs-2">
-                <a href="#console"><span class="glyphicon glyphicon-chevron-up"></span> Screw it, give me a console.</a>
+                <a href="#console"><span class="glyphicon glyphicon-chevron-up"></span>Cut the flim flam, give me a console.</a>
             </div>
             <div class="col-xs-8">
                 &nbsp;
@@ -127,8 +133,32 @@
     {{ super() }}
     <script src="{{ url_for('static', filename='js/console.js') }}"></script>
     <script>
+        function reloadStatus() {
+            $.get('/status', function(response) {
+                for (name in response) {
+                    var status = response[name];
+                    var $server = $('div.server[data-server="%s"]'.replace('%s', name));
+                    if ($server.length == 0) {
+                        continue;
+                    }
+                    $server.find('tbody > tr').remove();
+                    $server.find('h2 > small').text('%1 / %2'.replace('%1', status.players_humans).replace('%2', status.players_max));
+                    for (i in status.users) {
+                        var $row = $server.find('table > tbody').append($('#user-row').html());
+                        $row.find('td:nth-child(1)').text(status.users[i]['uniqueid']);
+                        $row.find('td:nth-child(2)').text(status.users[i]['name']);
+                        $row.find('td:nth-child(3)').text(status.users[i]['adr']);
+                        $row.find('td:nth-child(4)').text(status.users[i]['ping']);
+                        $row.find('td:nth-child(5)').text(status.users[i]['connected']);
+                    }
+                }
+                $('#lastRefresh').text('Last refresh: ' + (new Date()).toUTCString());
+            }, 'json');
+        }
+        
         $(function() {
-            
+            reloadStatus();
+            setInterval(reloadStatus, 10000);
         });
         
         $('.btn.ban, .btn.kick').click(function() {
@@ -149,7 +179,7 @@
             var $btn = $(this);
             $btn.button('loading');
             $.post('/command', {
-                'server': RCON_CONSOLE.getActiveServer(),
+                'server': $(this).parents('div.server').attr('data-server'),
                 'command': 'kickid ' + $modal.data('user')['uniqueid'] + (reason.length > 0 ? ' "' + reason.replace(/"/g, '\\"') + '"' : '')
             }, function(response) {
                 if (response.success) {
@@ -171,7 +201,7 @@
             var $btn = $(this);
             $btn.button('loading');
             $.post('/command', {
-                'server': RCON_CONSOLE.getActiveServer(),
+                'server': $(this).parents('div.server').attr('data-server'),
                 'command': 'banid ' + duration + ' ' + $modal.data('user')['uniqueid']
             }, function(response) {
                 if (response.success) {
