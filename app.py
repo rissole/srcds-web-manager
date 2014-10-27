@@ -30,13 +30,22 @@ refresh_rcons();
 
 # Routes
 @app.route("/")
-def status():
+def index():
     try:
         statuses = { name : rconparser.get_status(RCONS[name]) for name in RCONS }
     except socket.error:
         refresh_rcons()
         return status()
     return render_template('index.htm', statuses=statuses)
+
+@app.route("/status")
+def status():
+    try:
+        statuses = { name : rconparser.get_status(RCONS[name]) for name in RCONS }
+    except socket.error:
+        refresh_rcons()
+        return status()
+    return json.dumps(statuses)
 
 @app.route("/command", methods=['POST'])
 def command():

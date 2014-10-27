@@ -19,21 +19,6 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>dmy</td>
-                    <td>x</td>
-                    <td>x-high</td>
-                    <td>x-slow</td>
-                    <td>xml:lang</td>
-                    <td>
-                        <button type="button" class="btn kick btn-default btn-sm" title="Kick user">
-                          <span class="glyphicon glyphicon-eject"></span>
-                        </button>
-                        <button type="button" class="btn ban btn-default btn-sm" title="Ban user">
-                          <span class="glyphicon glyphicon-ban-circle"></span>
-                        </button>
-                    </td>
-                </tr>
             {% for user in status.users %}
                 <tr>
                     <td>{{ user.uniqueid }}</td>
@@ -55,20 +40,57 @@
         </table>
         <hr/>
     {% endfor %}
-    <div class="modal fade" id="user-action-modal" tabindex="-1" role="dialog" aria-labelledby="user-action-modal-label" aria-hidden="true">
+    <!-- kick modal -->
+    <div class="modal fade" id="user-kick-modal" tabindex="-1" role="dialog" aria-labelledby="user-kick-modal-label" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title" id="user-action-modal-label">%action% user</h4>
+            <h4 class="modal-title" id="user-kick-modal-label">Kick user</h4>
           </div>
           <div class="modal-body">
-            <label for="action-reason">Reason:</label>
-            <input type="text" class="form-control" id="action-reason" placeholder="Leave blank for no reason">
+            <label for="kick-reason">Reason:</label>
+            <input type="text" autocomplete="off" class="form-control" id="action-reason" placeholder="Leave blank for no reason">
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Confirm</button>
+            <button type="button" class="btn btn-primary" data-loading-text="Kicking...">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ban modal -->
+    <div class="modal fade" id="user-ban-modal" tabindex="-1" role="dialog" aria-labelledby="user-ban-modal-label" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="user-ban-modal-label">Ban user</h4>
+          </div>
+          <div class="modal-body">
+            <form class="form-inline" role="form">
+              <p><strong>Duration:</strong></p>
+              <label class="radio-inline">
+                <input type="radio" name="banDurationOptions" id="banDuration1" value="0" checked> Permanent
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="banDurationOptions" id="banDuration2" value="60"> 1 hour
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="banDurationOptions" id="banDuration3" value="1440"> 1 day
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="banDurationOptions" id="banDuration4" value="10080"> 1 week
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="banDurationOptions" id="banDurationCustom" value="-1"> Minutes:
+              </label>
+              <input type="number" id="banDurationCustomValue" style="width: 5em" value="0" min="0" max="9999999" autocomplete="off"></input>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" data-loading-text="Banning...">Confirm</button>
           </div>
         </div>
       </div>
@@ -105,22 +127,63 @@
     {{ super() }}
     <script src="{{ url_for('static', filename='js/console.js') }}"></script>
     <script>
+        $(function() {
+            
+        });
+        
         $('.btn.ban, .btn.kick').click(function() {
             var $row = $(this).parents('tr');
             var uniqueid = $row.find('td:nth-child(1)').text();
             var name = $row.find('td:nth-child(2)').text();
             var action = $(this).hasClass('ban') ? 'ban' : 'kick';
             
-            $('#user-action-modal')
+            $('#user-'+action+'-modal')
             .data('user', {'uniqueid': uniqueid, 'name': name, 'action': action})
             .modal('show')
             .find('.modal-title').text((action == 'ban' ? 'Ban' : 'Kick') + ' "' + name + '"');
         });
         
-        $('#user-action-modal .modal-footer > .btn-primary').click(function() {
-            var $modal = $('#user-action-modal');
+        $('#user-kick-modal .modal-footer > .btn-primary').click(function() {
+            var $modal = $('#user-kick-modal');
             var reason = $modal.find('input').val();
-            $modal.modal('hide');
+            var $btn = $(this);
+            $btn.button('loading');
+            $.post('/command', {
+                'server': RCON_CONSOLE.getActiveServer(),
+                'command': 'kickid ' + $modal.data('user')['uniqueid'] + (reason.length > 0 ? ' "' + reason.replace(/"/g, '\\"') + '"' : '')
+            }, function(response) {
+                if (response.success) {
+                    $modal.find('.modal-title').text('Kick successful.');
+                } else {
+                    $modal.find('.modal-title').text('Error during kick.');
+                }
+                $btn.button('reset')
+                setTimeout(function() { 
+                    $modal.modal('hide');
+                }, 1000);
+            }, 'json');
+        });
+        
+        $('#user-ban-modal .modal-footer > .btn-primary').click(function() {
+            var $modal = $('#user-ban-modal');
+            var duration = $('input[name="banDurationOptions"]:checked').val();
+            duration = (duration == "-1") ? $('#banDurationCustomValue').val() : duration;
+            var $btn = $(this);
+            $btn.button('loading');
+            $.post('/command', {
+                'server': RCON_CONSOLE.getActiveServer(),
+                'command': 'banid ' + duration + ' ' + $modal.data('user')['uniqueid']
+            }, function(response) {
+                if (response.success) {
+                    $modal.find('.modal-title').text('Ban successful.');
+                } else {
+                    $modal.find('.modal-title').text('Error during ban.');
+                }
+                $btn.button('reset')
+                setTimeout(function() { 
+                    $modal.modal('hide');
+                }, 1000);
+            }, 'json');
         });
     </script>
 {% endblock %}
