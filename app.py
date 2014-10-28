@@ -52,7 +52,8 @@ def login():
     if request.method == 'POST':
         user = request.form['username']
         if users_config.has_section(user):
-            m = hashlib.sha512()
+            m = hashlib.sha256()
+            m.update(users_config.get(user, 'salt', ''))
             m.update(request.form['password'])
             if m.hexdigest() == users_config.get(user, 'hash', ''):
                 session['username'] = user

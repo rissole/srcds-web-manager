@@ -1,10 +1,11 @@
 import hashlib
 import ConfigParser
 import getpass
+import os
 
 users_config = ConfigParser.ConfigParser()
 users_config.read('users.ini')
-m = hashlib.sha512()
+m = hashlib.sha256()
 
 user = raw_input('Username: ')
 
@@ -22,8 +23,12 @@ while True:
     else:
         print('Password mismatch.')
 
+
+salt = os.urandom(24)
+m.update(salt)
 m.update(pw1)
 users_config.set(user, 'hash', m.hexdigest())
+users_config.set(user, 'salt', salt)
 
 with open('users.ini', 'wb') as configfile:
     users_config.write(configfile)
