@@ -26,7 +26,7 @@ Auth
 
 How does auth in this weird thing work? Good question.
 
-- User accounts are stored in `users.ini` as usernames and hashed passwords.
+- User accounts are stored in `users.ini` as usernames and hashed + salted passwords.
 - To add a new account or change a password, use the provided `create_user.py`. It's pretty self explanatory.
 - To delete an account, just edit `users.ini` in a text editor and delete the section of the appropriate user.
 
